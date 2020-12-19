@@ -1,16 +1,23 @@
 # BoomBoxApp
 
-A new Flutter project.
+## Building and Running App
+- preparing dev environment: https://flutter.dev/docs/get-started/install
+- open emulated device (via AVD manager in Android studio or Simulator app for iOS)
+- execute "flutter run" from project root 
+- app should be running on simulator now
 
-## Getting Started
+- other helpful commands: "flutter clean", "flutter build ios", "flutter doctor -v"
 
-This project is a starting point for a Flutter application.
+## General Flutter Resources
+- good udemy course for flutter dev: https://www.udemy.com/course/learn-flutter-dart-to-build-ios-android-apps/
 
-A few resources to get you started if this is your first Flutter project:
+- official flutter docs: https://flutter.dev/docs
+- widget catalog: https://flutter.dev/docs/development/ui/widgets 
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+## Understanding Firebase Auth + Flutter Integration
+- https://medium.com/firebase-developers/dive-into-firebase-auth-on-flutter-email-and-link-sign-in-e51603eb08f8
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## DevTools
+- https://flutter.dev/docs/development/tools/devtools/overview
+- Installing cli: https://flutter.dev/docs/development/tools/devtools/cli
+

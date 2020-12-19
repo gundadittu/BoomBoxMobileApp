@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'dart:convert';
+import 'dart:developer' as developer;
+
+import '../error_manager.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-// import 'package:http/http.dart' as http;
 
 class AuthManager with ChangeNotifier {
   FirebaseAuth firebaseAuthInstance = FirebaseAuth.instance;
@@ -27,56 +30,74 @@ class AuthManager with ChangeNotifier {
   Future<void> sendEmailWithAuthLink(String userEmail) async {
     var acs = ActionCodeSettings(
       url:
-          "https://www.example.com/finishSignUp?cartId=1234", // NEED TO REPLACE THIS WITH PROPER URL to page with user instructions (download app and then click link again)
+          "https://boomboxapp.page.link/", // refactor and save in global constants
       handleCodeInApp: true,
       iOSBundleId: "com.boombox.boomboxapp", // refactor as global constants
-      androidPackageName: "com.boombox.boomboxapp", // refactor as global constants
+      androidPackageName:
+          "com.boombox.boomboxapp", // refactor as global constants
       androidInstallApp: true,
       androidMinimumVersion: "12",
+      dynamicLinkDomain: "boomboxapp.page.link",
     );
 
     try {
+      // Reference doc: https://pub.dev/documentation/firebase_auth/latest/firebase_auth/FirebaseAuth/sendSignInLinkToEmail.html
       await firebaseAuthInstance.sendSignInLinkToEmail(
           email: userEmail, actionCodeSettings: acs);
 
       final prefs = await SharedPreferences.getInstance();
       prefs.setString(userEmailForSignInWithEmailLinkKey, userEmail);
-    } catch (error) {
-      throw error; // refactor to manage error and throw errors that UI can read
+      notifyListeners();
+    } on FirebaseAuthException catch (e, stackTrace) {
+      if (e.code == "invalid-email") {
+        // "expected" error
+        throw Exception("The email address provided is invalid.");
+      } else {
+        await ErrorManager.reportError(e, stackTrace);
+        throw Exception(
+            "There was an issue sending your signup/login link. Please quit the app and try again.");
+      }
+    } catch (error, stackTrace) {
+      await ErrorManager.reportError(error, stackTrace);
+      throw Exception(
+          "There was an issue sending your signup/login link. Please quit the app and try again.");
     }
   }
 
   /* 
   Relevant docs: 
   - https://firebase.flutter.dev/docs/auth/usage#verify-email-link-and-sign-in
+  - https://pub.dev/packages/shared_preferences
   */
   Future<void> verifyEmailAuthLink(String emailAuthLink) async {
     final prefs = await SharedPreferences.getInstance();
     String userEmail = prefs.getString(userEmailForSignInWithEmailLinkKey);
 
-    // if (userEmail == null) {
-    //   // throw an error that can be read by UI
-    // }
+    if (userEmail == null) {
+      Exception reported_e = Exception(
+          "${userEmailForSignInWithEmailLinkKey} is null -> Can not verify email link for authentication.");
+      ErrorManager.reportError(reported_e, StackTrace.current);
+
+      // Send back an exception with user-friendly message to UI
+      throw Exception(
+          "There was an issue verifying this link. Please try again with a new link.");
+    }
 
     if (firebaseAuthInstance.isSignInWithEmailLink(emailAuthLink)) {
       try {
-        final value = await firebaseAuthInstance.signInWithEmailLink(
+        await firebaseAuthInstance.signInWithEmailLink(
             email: userEmail, emailLink: emailAuthLink);
 
         prefs.remove(userEmailForSignInWithEmailLinkKey);
-        // You can access the new user via value.user
-        // value.additionalUserInfo.profile == null
-        // You can check if the user is new or existing:
-        // value.additionalUserInfo.isNewUser;
-        // var user = value.user;
-        print('Successfully signed in with email link!');
-
         notifyListeners();
-      } catch (error) {
-        throw error; //refactor to throw user friendly error
+      } catch (error, stackTrace) {
+        await ErrorManager.reportError(error, stackTrace);
+        throw error;
       }
     } else {
-      throw Error(); // refactor to UI friendly error
+      Exception e = Exception(
+          "emailAuthLink is not a valid sign in link according to FirebaseAuth - Should be checking before calling this function.");
+      ErrorManager.reportError(e, StackTrace.current);
     }
   }
 
@@ -84,8 +105,9 @@ class AuthManager with ChangeNotifier {
     try {
       await firebaseAuthInstance.signOut();
       notifyListeners();
-    } catch (error) {
-      throw error; // refactor to throw error that UI can read
+    } catch (error, stackTrace) {
+      ErrorManager.reportError(error, stackTrace);
+      throw error;
     }
   }
 }
