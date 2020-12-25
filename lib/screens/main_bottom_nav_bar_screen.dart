@@ -1,7 +1,10 @@
 // Flutter + Dart dependencies
 import 'package:flutter/material.dart';
 
-// Extermal dependencies
+// Internal dependencies 
+import '../streaming/apple_music_auth_manager.dart';
+
+// External dependencies
 
 class MainBottomNavBar extends StatefulWidget {
   MainBottomNavBar({Key key}) : super(key: key);
@@ -35,6 +38,14 @@ class _MainBottomNavBarState extends State<MainBottomNavBar> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    
+    print('calling AppleMusicAuthManager');
+    AppleMusicAuthManager().configure();
   }
 
   @override

@@ -1,6 +1,6 @@
 // Flutter + Dart dependencies
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 
 // External dependencies
 import 'package:firebase_core/firebase_core.dart';
@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 // Providers
-import 'provider/auth_manager.dart';
+
 // Screens
 import 'screens/auth_screen.dart';
 import 'screens/main_bottom_nav_bar_screen.dart';
@@ -31,7 +31,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SentryFlutter.init(
     (options) => options.dsn =
-        'https://55e8c725858d460588bc683e69ebb554@o493644.ingest.sentry.io/5563418', // refactor to store dsn in config file
+        'https://55e8c725858d460588bc683e69ebb554@o493644.ingest.sentry.io/5563418', // TODO: refactor to store dsn in config file
     appRunner: () => runApp(MyApp()),
   );
 }
@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
       builder: (context, snapshot) {
         // Firebase SDK initialization failed
         if (snapshot.hasError) {
-          return Text("Something went wrong"); // Create proper widget for this
+          return Text("Something went wrong"); // TODO: Create proper widget for this
         }
 
         // Firebase SDK initialization success
@@ -69,7 +69,7 @@ class MyApp extends StatelessWidget {
               ChangeNotifierProvider(
                 create: (_) => AuthManager(),
               ),
-              // ChangeNotifierProxyProvider<Auth, Products>(
+              // ChangeNotifierProxyProvider<AuthManager, Products>(
               //   create: null,
               //   update: (ctx, auth, previousProducts) => Products(
               //     auth.token,
@@ -94,7 +94,7 @@ class MyApp extends StatelessWidget {
         }
 
         // Firebase SDK initialization in progress
-        return Text("Loading"); // Replace this with proper page
+        return Text("Loading"); // TODO: Replace this with proper page
       },
     );
   }
@@ -102,7 +102,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'BoomBox', // refactor to global config file
+        title: 'BoomBox', // TODO: refactor to global config file
         theme: ThemeData(
           primarySwatch: Colors.purple,
           accentColor: Colors.yellowAccent,

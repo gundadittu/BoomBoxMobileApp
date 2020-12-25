@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'dart:convert';
 
 /* 
 Notes: 
@@ -24,7 +25,7 @@ class ErrorManager {
   static showErrorDialog(BuildContext context, String message) {
     return showDialog<void>(
       context: context,
-      barrierDismissible: true, 
+      barrierDismissible: true,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Error'),
@@ -46,6 +47,14 @@ class ErrorManager {
         );
       },
     );
+  }
+
+  static Future<void> addContext(String message, Object obj) async {
+    if (!isInDebugMode) {
+      Sentry.configureScope((scope) => scope.setContexts(message, obj));
+    } else {
+      print(message + ': ' + jsonEncode(obj));
+    }
   }
 
   static Future<void> reportError(dynamic error, dynamic stackTrace) async {

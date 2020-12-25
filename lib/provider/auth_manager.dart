@@ -30,11 +30,11 @@ class AuthManager with ChangeNotifier {
   Future<void> sendEmailWithAuthLink(String userEmail) async {
     var acs = ActionCodeSettings(
       url:
-          "https://boomboxapp.page.link/", // refactor and save in global constants
+          "https://boomboxapp.page.link/", // TODO: efactor and save in global constants
       handleCodeInApp: true,
-      iOSBundleId: "com.boombox.boomboxapp", // refactor as global constants
+      iOSBundleId: "com.boombox.boomboxapp", // TODO:refactor as global constants
       androidPackageName:
-          "com.boombox.boomboxapp", // refactor as global constants
+          "com.boombox.boomboxapp", // TODO:refactor as global constants
       androidInstallApp: true,
       androidMinimumVersion: "12",
       dynamicLinkDomain: "boomboxapp.page.link",
