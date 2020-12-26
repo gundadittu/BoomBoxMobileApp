@@ -1,9 +1,12 @@
 // Flutter + Dart dependencies
 import 'package:flutter/material.dart';
 
-// Internal dependencies 
-import '../streaming/apple_music_auth_manager.dart';
+// Internal dependencies
+import '../provider/streaming_auth_manager.dart';
 
+import 'package:provider/provider.dart';
+
+import './home_screen.dart';
 // External dependencies
 
 class MainBottomNavBar extends StatefulWidget {
@@ -19,11 +22,8 @@ class _MainBottomNavBarState extends State<MainBottomNavBar> {
   static const TextStyle optionStyle =
       TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
 
-  static const List<Widget> _screenOptions = <Widget>[
-    Text(
-      'Index 0: Home',
-      style: optionStyle,
-    ),
+  static final List<Widget> _screenOptions = <Widget>[
+    HomeScreen(),
     Text(
       'Index 1: Business',
       style: optionStyle,
@@ -43,15 +43,19 @@ class _MainBottomNavBarState extends State<MainBottomNavBar> {
   @override
   void initState() {
     super.initState();
-    
-    print('calling AppleMusicAuthManager');
-    AppleMusicAuthManager().configure();
   }
+
+  // Future<void> _authorizeAppleMusic() async {
+  //   await Provider.of<StreamingAuthManager>(context, listen: false)
+  //       .authorizeAppleMusic();
+  // }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      body: Center( // remove this center widget after building actual pages 
+      body: Center(
+        // remove this center widget after building actual pages
         child: _screenOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(

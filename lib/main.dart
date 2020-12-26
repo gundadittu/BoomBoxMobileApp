@@ -10,12 +10,16 @@ import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 // Providers
+import 'provider/auth_manager.dart';
+import 'provider/streaming_auth_manager.dart';
 
 // Screens
 import 'screens/auth_screen.dart';
 import 'screens/main_bottom_nav_bar_screen.dart';
+
 // Internal Helpers
 import './error_manager.dart';
+import './firebase_manager.dart';
 
 // Note: Ignore the below error when executing "flutter run" for Android. Not fatal. Will be fixed in future Android release.
 // - W/ConnectionTracker(18335): Exception thrown while unbinding
@@ -46,6 +50,7 @@ class MyApp extends StatelessWidget {
     Future<FirebaseApp> _firebaseInitialization() async {
       try {
         FirebaseApp firebase = await Firebase.initializeApp();
+        FirebaseManager.shared = firebase;
         return firebase;
       } catch (error, stackTrace) {
         ErrorManager.reportError(error, stackTrace);
@@ -59,7 +64,8 @@ class MyApp extends StatelessWidget {
       builder: (context, snapshot) {
         // Firebase SDK initialization failed
         if (snapshot.hasError) {
-          return Text("Something went wrong"); // TODO: Create proper widget for this
+          return Text(
+              "Something went wrong"); // TODO: Create proper widget for this
         }
 
         // Firebase SDK initialization success
@@ -69,14 +75,13 @@ class MyApp extends StatelessWidget {
               ChangeNotifierProvider(
                 create: (_) => AuthManager(),
               ),
-              // ChangeNotifierProxyProvider<AuthManager, Products>(
-              //   create: null,
-              //   update: (ctx, auth, previousProducts) => Products(
-              //     auth.token,
-              //     auth.userId,
-              //     previousProducts == null ? [] : previousProducts.items,
-              //   ),
-              // ),
+              ChangeNotifierProxyProvider<AuthManager, StreamingAuthManager>(
+                create: (context) => StreamingAuthManager(null),
+                update: (context, authManager, streamingAuthManager) {
+                  streamingAuthManager.userUid = authManager.userUid;
+                  return streamingAuthManager;
+                },
+              ),
               // ChangeNotifierProvider(
               //   create: (_) => Cart(),
               // ),
@@ -137,8 +142,9 @@ class _HomePageState extends State<HomePage> {
   - https://pub.dev/documentation/firebase_dynamic_links/latest/firebase_dynamic_links/firebase_dynamic_links-library.html
   */
   void initDynamicLinks() async {
-    await Provider.of<AuthManager>(context, listen: false).signOut(); // - for dev purposes
-    
+    await Provider.of<AuthManager>(context, listen: false)
+        .signOut(); // - for dev purposes
+
     // Includes logic to check if deep link is for signing in via email and tell AuthManager
     Future<bool> handleEmailAuthLink(Uri deepLink) async {
       final String deepLinkString = deepLink.toString();
@@ -163,7 +169,8 @@ class _HomePageState extends State<HomePage> {
       }
     }, onError: (OnLinkErrorException e) async {
       ErrorManager.reportError(e, StackTrace.current);
-      ErrorManager.showErrorDialog(context, "There was an issue opening this deep link.");
+      ErrorManager.showErrorDialog(
+          context, "There was an issue opening this deep link.");
     });
 
     // Checks if a dynamic link is what caused the app to open; will retun null otherwise
@@ -184,9 +191,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Consumer<AuthManager>(
       builder: (ctx, authManager, _) {
+        Provider.of<StreamingAuthManager>(context, listen: false)
+            .initializeExistingAuthorizations();
         return authManager.isLoggedIn == true
-            ? MainBottomNavBar() 
-            : AuthScreen(); 
+            ? MainBottomNavBar()
+            : AuthScreen();
       },
     );
   }

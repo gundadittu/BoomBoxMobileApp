@@ -5,15 +5,15 @@ import 'dart:io' show Platform;
 import '../provider/streaming_auth_manager.dart';
 import '../error_manager.dart';
 
-  // if (hasPlaybackCapability) {
-  //    testAppleMusicPlayer();
-  // }
-  // Future<bool> testAppleMusicPlayer() async {
-  //   print("in testAppleMusicPlayer");
-  //   final songIDList = ["900032829"];
-  //   final playStatus = await platform.invokeMethod('playAppleMusicTest', [songIDList]);
-  //   print("playStatus is $playStatus");
-  // }
+// if (hasPlaybackCapability) {
+//    testAppleMusicPlayer();
+// }
+// Future<bool> testAppleMusicPlayer() async {
+//   print("in testAppleMusicPlayer");
+//   final songIDList = ["900032829"];
+//   final playStatus = await platform.invokeMethod('playAppleMusicTest', [songIDList]);
+//   print("playStatus is $playStatus");
+// }
 
 class AppleMusicAuthManager {
   static const platform =
@@ -28,7 +28,8 @@ class AppleMusicAuthManager {
 
   Future<void> authorize() async {
     if (!Platform.isIOS) {
-      throw StreamingAuthError(StreamingAuthErrorType.incompatibleDevicePlatform);
+      throw StreamingAuthError(
+          StreamingAuthErrorType.incompatibleDevicePlatform);
     }
 
     await _requestAccountAuthorization();
@@ -45,7 +46,7 @@ class AppleMusicAuthManager {
     try {
       userToken = await platform.invokeMethod('requestAppleMusicUserToken');
       ErrorManager.addContext("Received Apple Music user token", userToken);
-      if (userToken == null) { 
+      if (userToken == null) {
         throw Error();
       }
     } catch (e, stackTrace) {
@@ -59,7 +60,8 @@ class AppleMusicAuthManager {
     try {
       storeFrontCountryCode =
           await platform.invokeMethod('requestAppleMusicStorefrontCountryCode');
-      ErrorManager.addContext("Recieved storeFrontCountryCode", storeFrontCountryCode);
+      ErrorManager.addContext(
+          "Recieved storeFrontCountryCode", storeFrontCountryCode);
     } catch (e, stackTrace) {
       storeFrontCountryCode = null;
       ErrorManager.reportError(e, stackTrace);
@@ -90,6 +92,8 @@ class AppleMusicAuthManager {
       }
 
       int authorizationStatus = await _getUserAuthorizationStatus();
+      ErrorManager.addContext(
+          "Recieved apple music authorization status:", authorizationStatus);
 
       // Updates class authorization status and throws errors if authorization is denied or restricted
       _handleAuthorizationStatus(authorizationStatus);
@@ -124,7 +128,6 @@ class AppleMusicAuthManager {
       hasPlaybackCapability = capabilityList[0];
       eligibleForSubscription = capabilityList[1];
       canAddtoCloudMusicLibrary = capabilityList[2];
-
     } catch (e, stackTrace) {
       ErrorManager.reportError(e, stackTrace);
       throw StreamingAuthError(StreamingAuthErrorType.unknown);

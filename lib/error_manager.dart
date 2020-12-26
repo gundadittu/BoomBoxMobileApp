@@ -22,8 +22,8 @@ class ErrorManager {
     return inDebugMode;
   }
 
-  static showErrorDialog(BuildContext context, String message) {
-    return showDialog<void>(
+  static void showErrorDialog(BuildContext context, String message) {
+    showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {
@@ -49,7 +49,7 @@ class ErrorManager {
     );
   }
 
-  static Future<void> addContext(String message, Object obj) async {
+  static void addContext(String message, Object obj) async {
     if (!isInDebugMode) {
       Sentry.configureScope((scope) => scope.setContexts(message, obj));
     } else {
@@ -57,7 +57,7 @@ class ErrorManager {
     }
   }
 
-  static Future<void> reportError(dynamic error, dynamic stackTrace) async {
+  static void reportError(dynamic error, dynamic stackTrace) async {
     print('ErrorManger.reportError: Caught error: $error');
     if (!isInDebugMode) {
       // Send the Exception and Stacktrace to Sentry in Production mode.

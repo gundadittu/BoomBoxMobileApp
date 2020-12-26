@@ -32,7 +32,7 @@ import MediaPlayer
             }
             self?.playAppleMusicTest(list: songList, result: result)
         } else if call.method == "isUserAuthorizedWithAppleMusic" {
-            
+            self?.isUserAuthorizedWithAppleMusic(result: result);
         }
         
     })

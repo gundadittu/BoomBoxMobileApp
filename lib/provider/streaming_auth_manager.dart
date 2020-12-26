@@ -1,11 +1,14 @@
+import 'dart:convert';
+
 import 'package:BoomBoxApp/error_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 // import 'package:provider/provider.dart';
 import '../streaming/apple_music_auth_manager.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-
-part 'streaming_manager.g.dart';
+import '../firebase_manager.dart';
+// https://flutter.dev/docs/development/data-and-backend/json
+part 'streaming_auth_manager.g.dart';
 
 enum StreamingAuthErrorType {
   unknown,
@@ -21,7 +24,7 @@ class StreamingAuthError implements Exception {
 }
 
 class StreamingAuthManager with ChangeNotifier {
-  final String userUid;
+  String userUid;
 
   bool canHandlePlayback = false;
 
@@ -32,26 +35,31 @@ class StreamingAuthManager with ChangeNotifier {
   Future<void> initializeExistingAuthorizations() async {
     if (userUid == null) {
       // TODO: should i throw an error here? user is not signed in and app is still trying to initialize? prolly not
+      ErrorManager.addContext(
+          "Returned out of initializeExistingAuthorizations due to null userUid",
+          userUid);
       return;
     }
     try {
       final existingStreamingAccount =
-          await fetchCurrentUserStreamingAccountStoreItem();
-
-      ErrorManager.addContext("Fetched Current User Streaming Account Store Item", existingStreamingAccount)
+          await fetchExistingStreamingAccountItem();
+      ErrorManager.addContext(
+          "Fetched Current User Streaming Account Store Item",
+          existingStreamingAccount);
 
       // No existing authorizations available
       if (existingStreamingAccount == null) {
         return;
       }
 
-      if (streamingAccount.accountType ==
-          UserStreamingAccountStoreItemAccountType.appleMusic) {
-        authorizeAppleMusic();
-      } else if (streamingAccount.accountType ==
-          UserStreamingAccountStoreItemAccountType.spotify) {
-        // TODO: implement spotify later
-        return;
+      final accountType = existingStreamingAccount.accountType;
+      switch (accountType) {
+        case UserStreamingAccountStoreItemAccountType.appleMusic:
+          authorizeAppleMusic();
+          break;
+        case UserStreamingAccountStoreItemAccountType.spotify:
+          // TODO
+          break;
       }
     } on Exception catch (e, stackTrace) {
       ErrorManager.reportError(e, stackTrace);
@@ -62,7 +70,7 @@ class StreamingAuthManager with ChangeNotifier {
   Future<void> authorizeAppleMusic() async {
     final appleMusicAuthManager = AppleMusicAuthManager();
     await appleMusicAuthManager.authorize();
-
+  
     final accessToken = appleMusicAuthManager.userToken;
     canHandlePlayback = appleMusicAuthManager.hasPlaybackCapability;
 
@@ -71,18 +79,20 @@ class StreamingAuthManager with ChangeNotifier {
       'appleMusicAccessToken': accessToken,
     };
 
-    streamingAccount = await _linkStreamingAccountForUser(data);
+    streamingAccount = await _setStreamingAccountForUser(data);
+    ErrorManager.addContext(
+        "Set StreamingAuthManager.streamingaccount value", streamingAccount);
 
     notifyListeners();
   }
 
   // Fetches existing User Streaming Account from DB
   Future<UserStreamingAccountStoreItem>
-      fetchCurrentUserStreamingAccountStoreItem() async {
+      fetchExistingStreamingAccountItem() async {
     // TODO: save function names in constants file
-    HttpsCallable callable = FirebaseFunctions.instance
-        .httpsCallable("fetchCurrentUserStreamingAccountStoreItem");
-    final response = await callable.call();
+    HttpsCallable callable = FirebaseManager.functions
+        .httpsCallable("fetchExistingStreamingAccountItem");
+    final HttpsCallableResult response = await callable.call();
     final data = response.data;
 
     // No existing authorizations found
@@ -90,36 +100,50 @@ class StreamingAuthManager with ChangeNotifier {
       return null;
     }
 
-    return UserStreamingAccountStoreItem.fromJson(data);
+    try {
+      final decodedJson = json.decode(data);
+      final item = UserStreamingAccountStoreItem.fromJson(decodedJson);
+      return item;
+    } catch (e, stackTrace) {
+      ErrorManager.reportError(e, stackTrace);
+      return null;
+    }
   }
 
   // Stores new/updated User Streaming Account in DB
-  Future<UserStreamingAccountStoreItem> _linkStreamingAccountForUser(
+  Future<UserStreamingAccountStoreItem> _setStreamingAccountForUser(
       Map<String, dynamic> data) async {
     // TODO: save function names in constants file
-    ErrorManager.addContext("Sent _linkStreamingAccountForUser() http request", data);
+    ErrorManager.addContext(
+        "Sent setUserStreamingAccount() http request", data);
     HttpsCallable callable =
-        FirebaseFunctions.instance.httpsCallable("linkStreamingAccountForUser");
+        FirebaseManager.functions.httpsCallable("setUserStreamingAccount");
     final response = await callable.call(data);
     final streamingAccountData = response.data;
-
-    return UserStreamingAccountStoreItem.fromJson(streamingAccountData);
+    try {
+      final decodedJson = json.decode(streamingAccountData);
+      final item = UserStreamingAccountStoreItem.fromJson(decodedJson);
+      return item;
+    } catch (e, stackTrace) {
+      ErrorManager.reportError(e, stackTrace);
+      return null;
+    }
   }
 }
 
 // JSON Serializable library: https://flutter.dev/docs/development/data-and-backend/json
 // Helpful Tutorial: https://medium.com/codechai/validating-json-in-flutter-6f07ec9344f8
-@JsonSerializable()
-class UserStreamingAccountStoreItemLibrary {
-  UserStreamingAccountStoreItemLibrary(this.songs);
+// @JsonSerializable()
+// class UserStreamingAccountStoreItemLibrary {
+//   UserStreamingAccountStoreItemLibrary(this.songs);
 
-  @JsonKey(required: true, name: "songs", disallowNullValue: true)
-  List<String> songs;
+//   @JsonKey(required: true, name: "songs", disallowNullValue: true)
+//   List<String> songs;
 
-  factory UserStreamingAccountStoreItemLibrary.fromJson(
-          Map<String, dynamic> json) =>
-      _$UserStreamingAccountStoreItemLibraryFromJson(json);
-}
+//   factory UserStreamingAccountStoreItemLibrary.fromJson(
+//           Map<String, dynamic> json) =>
+//       _$UserStreamingAccountStoreItemLibraryFromJson(json);
+// }
 
 enum UserStreamingAccountStoreItemAccountType {
   @JsonValue("appleMusic")
@@ -131,7 +155,7 @@ enum UserStreamingAccountStoreItemAccountType {
 @JsonSerializable()
 class UserStreamingAccountStoreItem {
   UserStreamingAccountStoreItem(
-      this.userUid, this.accountType, this.appleMusicAccessToken, this.library);
+      this.userUid, this.accountType, this.appleMusicAccessToken);
 
   @JsonKey(required: true, name: "userUid", disallowNullValue: true)
   final String userUid;
@@ -142,12 +166,11 @@ class UserStreamingAccountStoreItem {
   @JsonKey(name: "appleMusicAccessToken")
   final String appleMusicAccessToken;
 
-  //@JsonKey(name: "spotifyAccessToken")
+  // @JsonKey(name: "spotifyAccessToken")
   //final String spotifyAccessToken;
-
-  @JsonKey(required: false, name: "library")
-  final UserStreamingAccountStoreItemLibrary library;
 
   factory UserStreamingAccountStoreItem.fromJson(Map<String, dynamic> json) =>
       _$UserStreamingAccountStoreItemFromJson(json);
+
+  Map<String, dynamic> toJson() => _$UserStreamingAccountStoreItemToJson(this);
 }

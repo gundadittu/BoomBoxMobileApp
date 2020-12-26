@@ -17,7 +17,7 @@ class AuthManager with ChangeNotifier {
     return firebaseAuthInstance.currentUser != null;
   }
 
-  String get userId {
+  String get userUid {
     return firebaseAuthInstance.currentUser != null
         ? firebaseAuthInstance.currentUser.uid
         : null;
