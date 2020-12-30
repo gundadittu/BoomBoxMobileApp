@@ -26,10 +26,11 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>Bundle ID</string>
+			<string>com.boombox.boomboxapp</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.boombox.boomboxapp</string>
+				<string>http://boomboxapp.com/spotify-callback/</string>
 			</array>
 		</dict>
 	</array>

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 // Internal dependencies
 import '../error_manager.dart';
-import '../provider/auth_manager.dart';
+import '../providers/auth_manager.dart';
 
 //External dependencies
 import 'package:provider/provider.dart';

@@ -2,7 +2,7 @@ import 'package:BoomBoxApp/error_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io' show Platform;
-import '../provider/streaming_auth_manager.dart';
+import '../providers/streaming_auth_manager.dart';
 import '../error_manager.dart';
 
 // if (hasPlaybackCapability) {
@@ -18,27 +18,54 @@ import '../error_manager.dart';
 class AppleMusicAuthManager {
   static const platform =
       const MethodChannel('streaming.boombox.app/apple-music');
-  String storeFrontCountryCode;
   String userToken;
+  
+  // TODO: do we need the below 5 variables?
   // accountAuthorized indicates whether the app is authorized to access the user's account
   bool accountAuthorized = false;
+  String storeFrontCountryCode;
   bool hasPlaybackCapability = false;
   bool eligibleForSubscription = false;
   bool canAddtoCloudMusicLibrary = false;
 
-  Future<void> authorize() async {
-    if (!Platform.isIOS) {
-      throw StreamingAuthError(
-          StreamingAuthErrorType.incompatibleDevicePlatform);
+  Function(String) sessionSuccessCallback;
+  Function(StreamingAuthError) sessionFailureCallback;
+
+  static final AppleMusicAuthManager _singleton =
+      new AppleMusicAuthManager._internal();
+
+  factory AppleMusicAuthManager() {
+    return _singleton;
+  }
+
+  AppleMusicAuthManager._internal() {}
+
+  Future<void> authorize(Function(String) successCallback,
+      Function(StreamingAuthError) failureCallback) async {
+    try {
+      if (!Platform.isIOS) {
+        throw StreamingAuthError(
+            StreamingAuthErrorType.incompatibleDevicePlatform);
+      }
+
+      sessionSuccessCallback = successCallback;
+      sessionFailureCallback = failureCallback;
+
+      await _requestAccountAuthorization();
+
+      await _requestCapabilities();
+
+      await _requestUserToken();
+
+      await _requestStorefrontCountryCode();
+
+      successCallback(userToken);
+    } on StreamingAuthError catch (e) {
+      failureCallback(e);
+    } on Exception catch (e, stackTrace) {
+      ErrorManager.reportError(e, stackTrace);
+      failureCallback(StreamingAuthError(StreamingAuthErrorType.unknown));
     }
-
-    await _requestAccountAuthorization();
-
-    await _requestCapabilities();
-
-    await _requestUserToken();
-
-    await _requestStorefrontCountryCode();
   }
 
   // https://developer.apple.com/documentation/storekit/skcloudservicecontroller/2909079-requestusertoken
@@ -47,7 +74,7 @@ class AppleMusicAuthManager {
       userToken = await platform.invokeMethod('requestAppleMusicUserToken');
       ErrorManager.addContext("Received Apple Music user token", userToken);
       if (userToken == null) {
-        throw Error();
+        throw Exception("Missing Apple Music User Token");
       }
     } catch (e, stackTrace) {
       ErrorManager.reportError(e, stackTrace);
@@ -110,8 +137,10 @@ class AppleMusicAuthManager {
 
       // Throws errors if authorization is denied or restricted
       _handleAuthorizationStatus(authorizationStatus);
-    } catch (e, stackTrace) {
-      accountAuthorized = false;
+    } on StreamingAuthError catch (e, stackTrace) {
+      ErrorManager.reportError(e, stackTrace);
+      throw e;
+    } on Exception catch (e, stackTrace) {
       ErrorManager.reportError(e, stackTrace);
       throw StreamingAuthError(StreamingAuthErrorType.unknown);
     }
