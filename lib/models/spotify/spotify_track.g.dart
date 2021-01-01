@@ -11,7 +11,6 @@ SpotifyTrack _$SpotifyTrackFromJson(Map<String, dynamic> json) {
     'id',
     'album',
     'duration_ms',
-    'is_playable',
     'name',
     'uri',
     'external_ids',
@@ -22,7 +21,6 @@ SpotifyTrack _$SpotifyTrackFromJson(Map<String, dynamic> json) {
     'id',
     'album',
     'duration_ms',
-    'is_playable',
     'name',
     'uri',
     'external_ids',
@@ -34,7 +32,6 @@ SpotifyTrack _$SpotifyTrackFromJson(Map<String, dynamic> json) {
     json['name'] as String,
     json['duration_ms'] as int,
     json['explicit'] as bool,
-    json['is_playable'] as bool,
     json['preview_url'] as String,
     json['uri'] as String,
     json['is_local'] as bool,
@@ -70,7 +67,6 @@ Map<String, dynamic> _$SpotifyTrackToJson(SpotifyTrack instance) {
   writeNotNull('id', instance.id);
   writeNotNull('album', instance.album);
   writeNotNull('duration_ms', instance.durationMs);
-  writeNotNull('is_playable', instance.isPlayable);
   writeNotNull('name', instance.name);
   writeNotNull('uri', instance.uri);
   writeNotNull('external_ids', instance.externalIds);

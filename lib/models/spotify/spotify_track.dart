@@ -14,7 +14,6 @@ class SpotifyTrack {
     this.name,
     this.durationMs,
     this.explicit,
-    this.isPlayable,
     this.previewUrl,
     this.uri,
     this.isLocal,
@@ -34,8 +33,8 @@ class SpotifyTrack {
   @JsonKey(required: true, name: "duration_ms", disallowNullValue: true)
   final int durationMs;
 
-  @JsonKey(required: true, name: "is_playable", disallowNullValue: true)
-  final bool isPlayable;
+  // @JsonKey(required: true, name: "is_playable", disallowNullValue: true)
+  // final bool isPlayable;
 
   @JsonKey(required: true, name: "name", disallowNullValue: true)
   final String name;

@@ -6,7 +6,7 @@ part 'spotify_external_url.g.dart';
 class SpotifyExternalUrl {
   SpotifyExternalUrl(this.spotify);
 
-  @JsonKey(required: false, name: "spotify", disallowNullValue: false)
+  @JsonKey(required: true, name: "spotify", disallowNullValue: false)
   final String spotify;
 
   factory SpotifyExternalUrl.fromJson(Map<String, dynamic> json) =>

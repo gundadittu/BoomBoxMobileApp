@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-import './apple_music_catalog_song.dart';
+import 'appleMusic/apple_music_catalog_song.dart';
 import 'spotify/spotify_track.dart';
 
 part 'isrc_store_item.g.dart';
@@ -68,7 +68,7 @@ class IsrcStoreItem {
 
   @JsonKey(
     name: "appleMusicCatalogSong",
-    disallowNullValue: true,
+    disallowNullValue: false,
   )
   final AppleMusicCatalogSong appleMusicCatalogSong;
 

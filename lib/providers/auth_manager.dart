@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../error_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,10 +7,49 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../firebase_manager.dart';
 
 class AuthManager with ChangeNotifier {
+  FirebaseAuth firebaseAuthInstance = FirebaseManager.auth;
+  String userEmailForSignInWithEmailLinkKey = 'userEmailForSignInWithEmailLink';
+  StreamSubscription<User> _userAuthListener;
+
+  User _user;
+
+  User get user {
+    return _user;
+  }
+
+  bool get isLoggedIn {
+    return _user != null;
+  }
+
+  String get userUid {
+    if (_user == null) {
+      return null;
+    }
+    return _user.uid;
+  }
+
+  String get userEmail {
+    if (_user == null) {
+      return null;
+    }
+    return _user.email;
+  }
+
+  String get displayName {
+    if (_user == null) {
+      return null;
+    }
+    return _user.displayName;
+  }
+
   AuthManager._internal() {
     // Sets up listener for when Firebase authenticated user state changes
     // -> Consumers will read updated isLoggedIn and userUid values
-    firebaseAuthInstance.authStateChanges().listen((User user) {
+    _userAuthListener =
+        firebaseAuthInstance.authStateChanges().listen((User user) {
+      print(
+          "in firebaseAuthInstance.authStateChanges() with user: " + user?.uid);
+      _user = user;
       notifyListeners();
     });
   }
@@ -19,18 +60,13 @@ class AuthManager with ChangeNotifier {
     return _singleton;
   }
 
-  FirebaseAuth firebaseAuthInstance = FirebaseManager.auth;
-
-  String userEmailForSignInWithEmailLinkKey = 'userEmailForSignInWithEmailLink';
-
-  bool get isLoggedIn {
-    return firebaseAuthInstance.currentUser != null;
-  }
-
-  String get userUid {
-    return firebaseAuthInstance.currentUser != null
-        ? firebaseAuthInstance.currentUser.uid
-        : null;
+  @override
+  void dispose() {
+    if (_userAuthListener != null) {
+      _userAuthListener.cancel();
+      _userAuthListener = null;
+    }
+    super.dispose();
   }
 
   /* 
@@ -60,6 +96,7 @@ class AuthManager with ChangeNotifier {
       prefs.setString(userEmailForSignInWithEmailLinkKey, userEmail);
       notifyListeners();
     } on FirebaseAuthException catch (e, stackTrace) {
+      // TODO: Throw custom error for UI
       if (e.code == "invalid-email") {
         // "expected" error
         throw Exception("The email address provided is invalid.");
@@ -69,6 +106,7 @@ class AuthManager with ChangeNotifier {
             "There was an issue sending your signup/login link. Please quit the app and try again.");
       }
     } catch (error, stackTrace) {
+      // TODO: Throw custom error for UI
       ErrorManager.reportError(error, stackTrace);
       throw Exception(
           "There was an issue sending your signup/login link. Please quit the app and try again.");
@@ -85,11 +123,12 @@ class AuthManager with ChangeNotifier {
     String userEmail = prefs.getString(userEmailForSignInWithEmailLinkKey);
 
     if (userEmail == null) {
+      // TODO: Throw custom error for UI
       Exception reported_e = Exception(
           "${userEmailForSignInWithEmailLinkKey} is null -> Can not verify email link for authentication.");
       ErrorManager.reportError(reported_e, StackTrace.current);
 
-      // Send back an exception with user-friendly message to UI
+      // TODO: Throw custom error for UI
       throw Exception(
           "There was an issue verifying this link. Please try again with a new link.");
     }
@@ -102,10 +141,12 @@ class AuthManager with ChangeNotifier {
         prefs.remove(userEmailForSignInWithEmailLinkKey);
         notifyListeners();
       } catch (error, stackTrace) {
+        // TODO: Throw custom error for UI
         ErrorManager.reportError(error, stackTrace);
         throw error;
       }
     } else {
+      // TODO: Throw custom error for UI
       Exception e = Exception(
           "emailAuthLink is not a valid sign in link according to FirebaseAuth - Should be checking before calling this function.");
       ErrorManager.reportError(e, StackTrace.current);
@@ -117,6 +158,7 @@ class AuthManager with ChangeNotifier {
       await firebaseAuthInstance.signOut();
     } catch (error, stackTrace) {
       ErrorManager.reportError(error, stackTrace);
+      // TODO: Throw custom error for UI
       throw error;
     }
   }

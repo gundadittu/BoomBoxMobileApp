@@ -9,15 +9,10 @@ part of 'user_streaming_library_store_item.dart';
 UserStreamingLibraryStoreItem _$UserStreamingLibraryStoreItemFromJson(
     Map<String, dynamic> json) {
   $checkKeys(json,
-      requiredKeys: const ['userUid', 'librarySongs'],
-      disallowNullValues: const ['userUid', 'librarySongs']);
+      requiredKeys: const ['userUid'], disallowNullValues: const ['userUid']);
   return UserStreamingLibraryStoreItem(
     json['userUid'] as String,
-    (json['librarySongs'] as List)
-        ?.map((e) => e == null
-            ? null
-            : IsrcStoreItem.fromJson(e as Map<String, dynamic>))
-        ?.toList(),
+    (json['librarySongsIsrcCodes'] as List)?.map((e) => e as String)?.toList(),
   );
 }
 
@@ -32,6 +27,6 @@ Map<String, dynamic> _$UserStreamingLibraryStoreItemToJson(
   }
 
   writeNotNull('userUid', instance.userUid);
-  writeNotNull('librarySongs', instance.librarySongs);
+  val['librarySongsIsrcCodes'] = instance.librarySongsIsrcCodes;
   return val;
 }

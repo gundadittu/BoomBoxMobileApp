@@ -45,7 +45,7 @@ class _MainBottomNavBarState extends State<MainBottomNavBar> {
 
   void _showStartBoomboxScreen(BuildContext context) {
     // TODO: need to check if user has a connected streaming account + set display name + photo
-    // if not, then they shouldn't be able to add songs 
+    // if not, then they shouldn't be able to add songs -> show different view 
 
     final streamingLibraryManager =
         Provider.of<StreamingLibraryManager>(context, listen: false);

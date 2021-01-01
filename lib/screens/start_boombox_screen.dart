@@ -28,30 +28,28 @@ class _StartBoomboxScreenState extends State<StartBoomboxScreen>
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Provider.of<StreamingLibraryManager>(context, listen: false)
-          .populateAllLibraryData(),
-      builder: (context, snapshot) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Select Songs'),
-            leading: Container(),
-            backgroundColor: Colors.transparent,
-            bottom: new TabBar(
+    // return FutureBuilder(
+    //   future: Provider.of<StreamingLibraryManager>(context, listen: false)
+    //       .populateAllLibraryData(),
+    //   builder: (context, snapshot) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Select Songs'),
+        leading: Container(),
+        backgroundColor: Colors.transparent,
+        bottom: new TabBar(
+          controller: tabController,
+          tabs: allTabs,
+        ),
+      ),
+      body: Provider.of<StreamingLibraryManager>(context).isUpdatingUserLibrary
+          ? Center(child: CircularProgressIndicator())
+          : TabBarView(
               controller: tabController,
-              tabs: allTabs,
+              children: <Widget>[
+                AddLibrarySongsBoomboxScreen(),
+              ],
             ),
-          ),
-          body: !(snapshot.connectionState == ConnectionState.done)
-              ? Center(child: CircularProgressIndicator())
-              : TabBarView(
-                  controller: tabController,
-                  children: <Widget>[
-                    AddLibrarySongsBoomboxScreen(),
-                  ],
-                ),
-        );
-      },
     );
   }
 }

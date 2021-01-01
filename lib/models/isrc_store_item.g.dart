@@ -16,8 +16,7 @@ IsrcStoreItem _$IsrcStoreItemFromJson(Map<String, dynamic> json) {
     'isrcId',
     'playEnabledForSpotify',
     'playEnabledForAppleMusic',
-    'mediaType',
-    'appleMusicCatalogSong'
+    'mediaType'
   ]);
   return IsrcStoreItem(
     isrcId: json['isrcId'] as String,
@@ -55,7 +54,7 @@ Map<String, dynamic> _$IsrcStoreItemToJson(IsrcStoreItem instance) {
       'mediaType', _$IsrcStoreItemMediaTypeEnumMap[instance.mediaType]);
   val['availableInAppleMusicCatalog'] = instance.availableInAppleMusicCatalog;
   val['appleMusicCatalogId'] = instance.appleMusicCatalogId;
-  writeNotNull('appleMusicCatalogSong', instance.appleMusicCatalogSong);
+  val['appleMusicCatalogSong'] = instance.appleMusicCatalogSong;
   val['availableInSpotifyCatalog'] = instance.availableInSpotifyCatalog;
   val['spotifyId'] = instance.spotifyId;
   val['spotifyTrack'] = instance.spotifyTrack;

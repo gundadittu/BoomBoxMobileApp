@@ -2,9 +2,13 @@
 
 ## Building and Running App
 - preparing dev environment: https://flutter.dev/docs/get-started/install
-- open emulated device (via AVD manager in Android studio or Simulator app for iOS)
+- run "flutter doctor -v" to ensure everything is set up correctly 
+- run "flutter pub get" to fetch all dependencies
+- open emulated device (via AVD manager in Android studio or Simulator app for iOS or connect physical device)
+- run "flutter pub run build_runner build --delete-conflicting-outputs" (docs: https://flutter.dev/docs/development/data-and-backend/json)
 - execute "flutter run" from project root 
 - app should be running on simulator now
+- Refer to these docs for more set up info: https://flutter.dev/docs/get-started/install
 
 - other helpful commands: "flutter clean", "flutter build ios", "flutter doctor -v"
 

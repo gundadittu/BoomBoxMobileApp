@@ -7,6 +7,7 @@ part of 'spotify_external_url.dart';
 // **************************************************************************
 
 SpotifyExternalUrl _$SpotifyExternalUrlFromJson(Map<String, dynamic> json) {
+  $checkKeys(json, requiredKeys: const ['spotify']);
   return SpotifyExternalUrl(
     json['spotify'] as String,
   );

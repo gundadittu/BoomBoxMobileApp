@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
   - FlutterFire: https://firebase.flutter.dev/docs/overview
   - How to setup
   */
-  FutureBuilder _createFirebaseFutureBuilder() {
+  FutureBuilder _firebaseAndProvidersBuilder() {
     Future<FirebaseApp> _firebaseInitialization() async {
       try {
         FirebaseApp firebase = await Firebase.initializeApp();
@@ -66,23 +66,36 @@ class MyApp extends StatelessWidget {
           return MultiProvider(
             providers: [
               ChangeNotifierProvider(
+                lazy: false,
                 create: (_) => AuthManager(),
               ),
               ChangeNotifierProxyProvider<AuthManager, StreamingAuthManager>(
-                create: (context) => StreamingAuthManager(),
+                lazy: false,
+                create: (context) => StreamingAuthManager()
+                  ..update(
+                      Provider.of<AuthManager>(context, listen: false).userUid),
                 update: (context, authManager, streamingAuthManager) {
-                  streamingAuthManager.update(authManager.userUid);
-                  return streamingAuthManager;
+                  return streamingAuthManager..update(authManager.userUid);
                 },
               ),
-              ChangeNotifierProxyProvider<StreamingAuthManager,
+              ChangeNotifierProxyProvider2<AuthManager, StreamingAuthManager,
                       StreamingLibraryManager>(
-                  create: (context) => StreamingLibraryManager(),
-                  update:
-                      (context, streamingAuthManager, streamingLibraryManager) {
-                    streamingLibraryManager
-                        .update(streamingAuthManager.streamingAccount);
-                    return streamingLibraryManager;
+                  lazy: false,
+                  create: (context) {
+                    return StreamingLibraryManager()
+                      ..update(
+                        Provider.of<AuthManager>(context, listen: false)
+                            .userUid,
+                        Provider.of<StreamingAuthManager>(context,
+                                listen: false)
+                            .streamingAccount,
+                      );
+                  },
+                  update: (context, authManager, streamingAuthManager,
+                      streamingLibraryManager) {
+                    return streamingLibraryManager
+                      ..update(authManager.userUid,
+                          streamingAuthManager.streamingAccount);
                   }),
             ],
             child: HomeScreen(),
@@ -111,7 +124,7 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         // Initializes Firebase SDK and UI
-        home: _createFirebaseFutureBuilder(),
+        home: _firebaseAndProvidersBuilder(),
         navigatorObservers: [
           SentryNavigatorObserver(),
         ],
