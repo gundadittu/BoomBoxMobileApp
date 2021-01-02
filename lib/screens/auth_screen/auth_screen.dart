@@ -1,13 +1,14 @@
 // Flutter/Dart dependencies
+import 'package:BoomBoxApp/redux/app/app_state.dart';
+import 'package:BoomBoxApp/redux/auth/auth_state.dart';
 import 'package:flutter/material.dart';
-
-// Internal dependencies
-import '../error_manager.dart';
-import '../providers/auth_manager.dart';
-
+import 'package:flutter_redux/flutter_redux.dart';
 //External dependencies
-import 'package:provider/provider.dart';
 import 'package:open_mail_app/open_mail_app.dart';
+
+import 'auth_screen_model.dart';
+
+import '../../error_manager.dart';
 
 // TO DO:
 // - add proper background + logo + etc.
@@ -18,51 +19,27 @@ class AuthScreen extends StatefulWidget {
     Key key,
   }) : super(key: key);
 
-  static final routeName = "/auth";
-
   @override
   _AuthScreenState createState() => _AuthScreenState();
 }
 
 class _AuthScreenState extends State<AuthScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey();
+  AuthScreenModel screenModel;
 
-  var _isLoading = false;
   Map<String, String> _formData = {
     'email': '',
   };
 
-  Future<void> _submitForm() async {
+  void _submitForm() async {
     if (!_formKey.currentState.validate()) {
       return;
     }
     _formKey.currentState.save();
 
-    setState(() {
-      _isLoading = true;
-    });
+    final userEmail = _formData['email'];
 
-    try {
-      final userEmail = _formData['email'];
-      await Provider.of<AuthManager>(context, listen: false)
-          .sendEmailWithAuthLink(userEmail);
-      try {
-        _showOpenMailAppInstructions();
-      } catch (e, stackTrace) {
-        // Allows us to keep track of whether users are having issues with the mail app picker
-        ErrorManager.reportError(e, stackTrace);
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
-    } catch (error) {
-      setState(() {
-        _isLoading = false;
-      });
-      // this error is already reported in AuthManager.sendEmailWithAuthLink
-      ErrorManager.showErrorDialog(context, error.toString());
-    }
+    screenModel.sendEmailWithAuthLink(userEmail);
   }
 
   void _showOpenMailAppInstructions() {
@@ -135,10 +112,10 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+  buildContent(AuthScreenModel screenModel) {
+    this.screenModel = screenModel;
 
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       resizeToAvoidBottomPadding: false,
@@ -210,7 +187,9 @@ class _AuthScreenState extends State<AuthScreen> {
                               autocorrect: false,
                               keyboardType: TextInputType.emailAddress,
                               maxLines: 1,
-                              enabled: !_isLoading,
+                              enabled:
+                                  !(screenModel.sendEmailWithAuthLinkStatus ==
+                                      SendEmailWithAuthLinkStatus.loading),
                               validator: (value) {
                                 if (value.isEmpty || !value.contains("@")) {
                                   return 'Must enter a valid email';
@@ -232,7 +211,11 @@ class _AuthScreenState extends State<AuthScreen> {
                             maxWidth: 500,
                           ),
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _submitForm,
+                            onPressed:
+                                (screenModel.sendEmailWithAuthLinkStatus ==
+                                        SendEmailWithAuthLinkStatus.loading)
+                                    ? null
+                                    : _submitForm,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(15.0),
@@ -261,7 +244,9 @@ class _AuthScreenState extends State<AuthScreen> {
                                       borderRadius: const BorderRadius.all(
                                           Radius.circular(20)),
                                     ),
-                                    child: _isLoading
+                                    child: screenModel
+                                                .sendEmailWithAuthLinkStatus ==
+                                            SendEmailWithAuthLinkStatus.loading
                                         ? CircularProgressIndicator()
                                         : Icon(
                                             Icons.navigate_next_outlined,
@@ -282,6 +267,41 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StoreConnector<AppState, AuthScreenModel>(
+      converter: (store) => AuthScreenModel.fromStore(store),
+      builder: (_, screenModel) => buildContent(screenModel),
+      onDidChange: (screenModel) {
+        if (screenModel.sendEmailWithAuthLinkStatus ==
+            SendEmailWithAuthLinkStatus.success) {
+          _showOpenMailAppInstructions();
+        } else if (screenModel.sendEmailWithAuthLinkStatus ==
+            SendEmailWithAuthLinkStatus.failureInvalidEmail) {
+          // TODO: SHOW ERROR DIALOG
+          ErrorManager.showErrorDialog(
+              context, "The provided email was invalid.");
+        } else if (screenModel.sendEmailWithAuthLinkStatus ==
+            SendEmailWithAuthLinkStatus.failureUnknown) {
+          ErrorManager.showErrorDialog(context,
+              "Something went wrong. We couldn't send you a log in link. We've been notified.");
+        } else if (screenModel.verifyEmailAuthLinkStatus ==
+            VerifyEmailAuthLinkStatus.failureInvalidExpiredLink) {
+          ErrorManager.showErrorDialog(context,
+              "Looks like you used an expired link to sign in. Please try again with a valid link.");
+        } else if (screenModel.verifyEmailAuthLinkStatus ==
+            VerifyEmailAuthLinkStatus.failureUserDisabled) {
+          ErrorManager.showErrorDialog(
+              context, "This user's account has been disabled.");
+        } else if (screenModel.verifyEmailAuthLinkStatus ==
+            VerifyEmailAuthLinkStatus.failureUnknown) {
+          ErrorManager.showErrorDialog(context,
+              "Something went wrong. We couldn't sign you in. We've been notified.");
+        }
+      },
     );
   }
 }
